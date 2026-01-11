@@ -1,4 +1,5 @@
-from flask import Flask, render_template
+import sqlite3
+from flask import Flask, render_template, request, redirect, url_for
 import pandas as pd
 from pathlib import Path
 import urllib.parse
@@ -7,7 +8,7 @@ app = Flask(__name__)
 
 BASE_DIR = Path(__file__).parent
 EXCEL_PATH = BASE_DIR / "data" / "ListaPresentes.xlsx"
-
+DB_PATH = BASE_DIR / "database.db"
 
 def carregar_presentes():
     """
@@ -45,12 +46,67 @@ def normalizar_link(valor):
     query = urllib.parse.quote(valor)
     return f"https://www.google.com/search?q={query}"
 
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def criar_tabela():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS presentes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            presente TEXT,
+            link1 TEXT,
+            link2 TEXT,
+            cores TEXT
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+def popular_banco_se_vazio():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM presentes")
+    total = cursor.fetchone()[0]
+
+    if total == 0:
+        df = pd.read_excel(EXCEL_PATH).fillna("")
+
+        for _, row in df.iterrows():
+            cursor.execute("""
+                INSERT INTO presentes (presente, link1, link2, cores)
+                VALUES (?, ?, ?, ?)
+            """, (
+                row["Presentes"],
+                row["Sugestão 1"],
+                row["Sugestão 2"],
+                row["Cores"]
+            ))
+
+        conn.commit()
+
+    conn.close()
 
 @app.route("/")
 def index():
-    presentes = carregar_presentes()
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM presentes")
+    presentes = cursor.fetchall()
+
+    conn.close()
+
     return render_template("index.html", presentes=presentes)
 
+criar_tabela()
+popular_banco_se_vazio()
 
 if __name__ == "__main__":
     app.run(debug=True)
