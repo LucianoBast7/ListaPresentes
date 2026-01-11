@@ -109,4 +109,4 @@ criar_tabela()
 popular_banco_se_vazio()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
