@@ -69,17 +69,20 @@ def criar_tabela():
     conn.commit()
     conn.close()
 
-def popular_banco_se_vazio():
+def sincronizar_presentes_excel():
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM presentes")
-    total = cursor.fetchone()[0]
+    # garante unicidade
+    cursor.execute("""
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_presente_unique
+        ON presentes(presente)
+    """)
 
-    if total == 0:
-        df = pd.read_excel(EXCEL_PATH).fillna("")
+    df = pd.read_excel(EXCEL_PATH).fillna("")
 
-        for _, row in df.iterrows():
+    for _, row in df.iterrows():
+        try:
             cursor.execute("""
                 INSERT INTO presentes (presente, link1, link2, cores)
                 VALUES (?, ?, ?, ?)
@@ -89,9 +92,11 @@ def popular_banco_se_vazio():
                 row["Sugestão 2"],
                 row["Cores"]
             ))
+        except sqlite3.IntegrityError:
+            # presente já existe → ignora
+            pass
 
-        conn.commit()
-
+    conn.commit()
     conn.close()
 
 @app.route("/escolher", methods=["POST"])
@@ -125,7 +130,7 @@ def index():
     return render_template("index.html", presentes=presentes)
 
 criar_tabela()
-popular_banco_se_vazio()
+sincronizar_presentes_excel()
 
 if __name__ == "__main__":
     app.run()
