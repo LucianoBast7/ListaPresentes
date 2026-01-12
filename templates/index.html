@@ -23,6 +23,7 @@
                     <th>Sugestão 1</th>
                     <th>Sugestão 2</th>
                     <th>Cores</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -33,23 +34,34 @@
                     <td>
                         {% if item.link1 %}
                             <a href="{{ item.link1 }}" target="_blank">Ver</a>
-                        {% else %}
-                            —
-                        {% endif %}
+                        {% else %}—{% endif %}
                     </td>
 
                     <td>
                         {% if item.link2 %}
                             <a href="{{ item.link2 }}" target="_blank">Ver</a>
-                        {% else %}
-                            —
-                        {% endif %}
+                        {% else %}—{% endif %}
                     </td>
 
                     <td>{{ item.cores }}</td>
+
+                    <td>
+                        {% if item.escolhido_por %}
+                            <span class="badge bg-success">
+                                Presente Escolhido
+                            </span>
+                        {% else %}
+                            <form method="POST" action="/escolher">
+                                <input type="hidden" name="presente_id" value="{{ item.id }}">
+                                <button class="btn btn-sm btn-primary">
+                                    Escolher
+                                </button>
+                            </form>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
-            </tbody>
+                </tbody>
         </table>
     </div>
 </div>

@@ -61,7 +61,8 @@ def criar_tabela():
             presente TEXT,
             link1 TEXT,
             link2 TEXT,
-            cores TEXT
+            cores TEXT,
+            escolhido_por TEXT
         )
     """)
 
@@ -92,6 +93,24 @@ def popular_banco_se_vazio():
         conn.commit()
 
     conn.close()
+
+@app.route("/escolher", methods=["POST"])
+def escolher():
+    presente_id = request.form["presente_id"]
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE presentes
+        SET escolhido_por = 'Presente Escolhido'
+        WHERE id = ? AND escolhido_por IS NULL
+    """, (presente_id,))
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("index"))
 
 @app.route("/")
 def index():
