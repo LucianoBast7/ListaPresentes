@@ -57,7 +57,6 @@
                             </span>
 
                             {% if is_admin %}
-                                <!-- Botão que abre modal de desfazer -->
                                 <button
                                     class="btn btn-sm btn-warning mt-2"
                                     data-bs-toggle="modal"
@@ -67,7 +66,6 @@
                                 </button>
                             {% endif %}
                         {% else %}
-                            <!-- Botão que abre modal de escolher -->
                             <button
                                 class="btn btn-sm btn-primary"
                                 data-bs-toggle="modal"
@@ -78,91 +76,89 @@
                         {% endif %}
                     </td>
                 </tr>
-
-                <!-- MODAL CONFIRMAR ESCOLHA -->
-                <div class="modal fade" id="confirmModal{{ item.id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-
-                            <div class="modal-header">
-                                <h5 class="modal-title">Confirmar escolha</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-
-                            <div class="modal-body">
-                                <p>
-                                    Tem certeza que deseja escolher o presente:
-                                    <strong>{{ item.presente }}</strong>?
-                                </p>
-                            </div>
-
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                    Cancelar
-                                </button>
-
-                                <form method="POST" action="/escolher">
-                                    <input type="hidden" name="presente_id" value="{{ item.id }}">
-                                    <button class="btn btn-success">
-                                        Confirmar
-                                    </button>
-                                </form>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-                <!-- FIM MODAL ESCOLHER -->
-
-                {% if is_admin %}
-                <!-- MODAL CONFIRMAR DESFAZER -->
-                <div class="modal fade" id="undoModal{{ item.id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-
-                            <div class="modal-header">
-                                <h5 class="modal-title text-danger">Desfazer escolha</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-
-                            <div class="modal-body">
-                                <p>
-                                    Tem certeza que deseja <strong>desfazer</strong> a escolha do presente:
-                                    <strong>{{ item.presente }}</strong>?
-                                </p>
-                                <p class="text-muted mb-0">
-                                    O presente ficará disponível novamente.
-                                </p>
-                            </div>
-
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                    Cancelar
-                                </button>
-
-                                <form
-                                    method="POST"
-                                    action="/admin/desfazer/{{ item.id }}?admin={{ request.args.get('admin') }}"
-                                >
-                                    <button class="btn btn-danger">
-                                        Confirmar
-                                    </button>
-                                </form>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-                <!-- FIM MODAL DESFAZER -->
-                {% endif %}
-
             {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% for item in presentes %}
 
-<!-- Bootstrap JS -->
+<!-- MODAL CONFIRMAR ESCOLHA -->
+<div class="modal fade" id="confirmModal{{ item.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmar escolha</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <p>
+          Tem certeza que deseja escolher o presente:
+          <strong>{{ item.presente }}</strong>?
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+
+        <form method="POST" action="/escolher">
+          <input type="hidden" name="presente_id" value="{{ item.id }}">
+          <button class="btn btn-success">
+            Confirmar
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% if is_admin %}
+<!-- MODAL CONFIRMAR DESFAZER -->
+<div class="modal fade" id="undoModal{{ item.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">Desfazer escolha</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <p>
+          Tem certeza que deseja desfazer a escolha do presente:
+          <strong>{{ item.presente }}</strong>?
+        </p>
+        <p class="text-muted mb-0">
+          O presente ficará disponível novamente.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+
+        <form
+          method="POST"
+          action="/admin/desfazer/{{ item.id }}?admin={{ request.args.get('admin') }}"
+        >
+          <button class="btn btn-danger">
+            Confirmar
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endfor %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
