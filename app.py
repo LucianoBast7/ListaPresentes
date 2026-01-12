@@ -9,6 +9,7 @@ app = Flask(__name__)
 BASE_DIR = Path(__file__).parent
 EXCEL_PATH = BASE_DIR / "data" / "ListaPresentes.xlsx"
 DB_PATH = BASE_DIR / "database.db"
+ADMIN_KEY = "acesso_admin"
 
 def carregar_presentes():
     """
@@ -117,8 +118,29 @@ def escolher():
 
     return redirect(url_for("index"))
 
+@app.route("/admin/desfazer/<int:presente_id>", methods=["POST"])
+def desfazer(presente_id):
+    if request.args.get("admin") != ADMIN_KEY:
+        return "Acesso negado", 403
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE presentes
+        SET escolhido_por = NULL
+        WHERE id = ?
+    """, (presente_id,))
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("index", admin=ADMIN_KEY))
+
 @app.route("/")
 def index():
+    is_admin = request.args.get("admin") == ADMIN_KEY
+
     conn = get_db()
     cursor = conn.cursor()
 
@@ -127,7 +149,7 @@ def index():
 
     conn.close()
 
-    return render_template("index.html", presentes=presentes)
+    return render_template("index.html", presentes=presentes, is_admin=is_admin)
 
 criar_tabela()
 sincronizar_presentes_excel()
