@@ -3,6 +3,9 @@ from flask import Flask, render_template, request, redirect, url_for
 import pandas as pd
 from pathlib import Path
 import urllib.parse
+import smtplib
+from email.message import EmailMessage
+
 
 app = Flask(__name__)
 
@@ -10,6 +13,33 @@ BASE_DIR = Path(__file__).parent
 EXCEL_PATH = BASE_DIR / "data" / "ListaPresentes.xlsx"
 DB_PATH = BASE_DIR / "database.db"
 ADMIN_KEY = "acesso_admin"
+
+def enviar_email_presente_escolhido(nome_presente):
+    EMAIL_REMETENTE = "lbbastos11@gmail.com"
+    EMAIL_SENHA = "ucay sxsf tlha pvks".replace(" ", "")
+    EMAIL_DESTINO = "lumestre.games@gmail.com"
+
+    msg = EmailMessage()
+    msg["Subject"] = "🎁 Presente escolhido na lista"
+    msg["From"] = EMAIL_REMETENTE
+    msg["To"] = EMAIL_DESTINO
+
+    msg.set_content(f"""
+Olá!
+
+Um presente acabou de ser escolhido na lista do chá de cozinha.
+
+Presente escolhido:
+- {nome_presente}
+
+Por favor, atualize a base e suba a nova versão da lista.
+
+Obrigado!
+""")
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(EMAIL_REMETENTE, EMAIL_SENHA)
+        smtp.send_message(msg)
 
 def carregar_presentes():
     """
@@ -107,15 +137,29 @@ def escolher():
     conn = get_db()
     cursor = conn.cursor()
 
+    # Busca o presente antes de atualizar
     cursor.execute("""
-        UPDATE presentes
-        SET escolhido_por = 'Presente Escolhido'
+        SELECT presente
+        FROM presentes
         WHERE id = ? AND escolhido_por IS NULL
     """, (presente_id,))
+    row = cursor.fetchone()
 
-    conn.commit()
+    if row:
+        nome_presente = row["presente"]
+
+        cursor.execute("""
+            UPDATE presentes
+            SET escolhido_por = 'Presente Escolhido'
+            WHERE id = ?
+        """, (presente_id,))
+
+        conn.commit()
+
+        # Envia o e-mail
+        enviar_email_presente_escolhido(nome_presente)
+
     conn.close()
-
     return redirect(url_for("index"))
 
 @app.route("/admin/desfazer/<int:presente_id>", methods=["POST"])
