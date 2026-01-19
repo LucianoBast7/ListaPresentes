@@ -5,6 +5,7 @@ from pathlib import Path
 import urllib.parse
 import smtplib
 from email.message import EmailMessage
+import os
 
 
 app = Flask(__name__)
@@ -15,9 +16,9 @@ DB_PATH = BASE_DIR / "database.db"
 ADMIN_KEY = "acesso_admin"
 
 def enviar_email_presente_escolhido(nome_presente):
-    EMAIL_REMETENTE = "lbbastos11@gmail.com"
-    EMAIL_SENHA = "ucay sxsf tlha pvks".replace(" ", "")
-    EMAIL_DESTINO = "lumestre.games@gmail.com"
+    EMAIL_REMETENTE = os.getenv("EMAIL_REMETENTE")
+    EMAIL_SENHA = os.getenv("EMAIL_SENHA")
+    EMAIL_DESTINO = os.getenv("EMAIL_DESTINO")
 
     msg = EmailMessage()
     msg["Subject"] = "🎁 Presente escolhido na lista"
