@@ -3,8 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for
 import pandas as pd
 from pathlib import Path
 import urllib.parse
-import smtplib
-from email.message import EmailMessage
+import requests
 import os
 
 
@@ -16,16 +15,27 @@ DB_PATH = BASE_DIR / "database.db"
 ADMIN_KEY = "acesso_admin"
 
 def enviar_email_presente_escolhido(nome_presente):
-    EMAIL_REMETENTE = os.getenv("EMAIL_REMETENTE")
-    EMAIL_SENHA = os.getenv("EMAIL_SENHA")
+    SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
     EMAIL_DESTINO = os.getenv("EMAIL_DESTINO")
+    EMAIL_REMETENTE = os.getenv("EMAIL_REMETENTE")
 
-    msg = EmailMessage()
-    msg["Subject"] = "🎁 Presente escolhido na lista"
-    msg["From"] = EMAIL_REMETENTE
-    msg["To"] = EMAIL_DESTINO
+    if not SENDGRID_API_KEY:
+        raise RuntimeError("SENDGRID_API_KEY não configurada")
 
-    msg.set_content(f"""
+    url = "https://api.sendgrid.com/v3/mail/send"
+
+    payload = {
+        "personalizations": [
+            {
+                "to": [{"email": EMAIL_DESTINO}],
+                "subject": "🎁 Presente escolhido na lista"
+            }
+        ],
+        "from": {"email": EMAIL_REMETENTE},
+        "content": [
+            {
+                "type": "text/plain",
+                "value": f"""
 Olá!
 
 Um presente acabou de ser escolhido na lista do chá de cozinha.
@@ -36,11 +46,22 @@ Presente escolhido:
 Por favor, atualize a base e suba a nova versão da lista.
 
 Obrigado!
-""")
+"""
+            }
+        ]
+    }
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login(EMAIL_REMETENTE, EMAIL_SENHA)
-        smtp.send_message(msg)
+    headers = {
+        "Authorization": f"Bearer {SENDGRID_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+
+    if response.status_code not in (200, 202):
+        raise RuntimeError(
+            f"Erro ao enviar email: {response.status_code} - {response.text}"
+        )
 
 def carregar_presentes():
     """
